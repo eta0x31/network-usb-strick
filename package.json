@@ -1,0 +1,26 @@
+{
+    "name": "network-usb-stick",
+    "version": "1.0.0",
+    "description": "a network usb stick",
+    "main": "main.ts",
+    "scripts": {
+        "build-id": "node create.build.id.js",
+        "patch": "npx auto-version --patch",
+        "minor": "npx auto-version --minor",
+        "major": "npx auto-version --major",
+        "dev": "nodemon",
+        "start": "ts-node --transpile-only main.ts"
+    },
+    "keywords": [],
+    "author": "Peter von der Bey",
+    "license": "ISC",
+    "devDependencies": {
+        "nodemon": "^3.0.1",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.0.4"
+    },
+    "dependencies": {
+        "auto-version-js": "^0.3.10",
+        "rpio": "^2.4.2"
+    }
+}

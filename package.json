@@ -15,12 +15,15 @@
     "author": "Peter von der Bey",
     "license": "ISC",
     "devDependencies": {
+        "@types/rpio": "^2.4.6",
         "nodemon": "^3.0.1",
         "ts-node": "^10.9.1",
         "typescript": "^5.0.4"
     },
     "dependencies": {
         "auto-version-js": "^0.3.10",
+        "chokidar": "^4.0.3",
+        "filewatcher": "^3.0.1",
         "rpio": "^2.4.2"
     }
 }

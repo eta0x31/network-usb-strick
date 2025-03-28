@@ -4,7 +4,7 @@ samba_config_file="/etc/samba/smb.conf"
 config_start="[opt]"
 
 if [[ ! -f "$samba_config_file" ]]; then
-    echo "Error: The Samba config file $samba_config_file does not exist."
+    echo "Error: The Samba config file at $samba_config_file does not exist."
     exit 1
 fi
 
@@ -14,7 +14,7 @@ awk -v start="$config_start" '
     !remove
 ' "$samba_config_file.bak" > "$samba_config_file"
 
-echo "The dev-mode has been disabled!"
+echo "The dev-mode is disabled!"
 
 systemctl restart smbd.service
-echo "Samba has been restarted."
+echo "Samba has restarted."

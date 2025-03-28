@@ -2,7 +2,7 @@
 
 # ---------------------------------------------------------------------------------------------------
 USB_FAT_TYPE=16
-USB_SIZE_MB=2048
+USB_SIZE_MB=500
 # ---------------------------------------------------------------------------------------------------
 
 # Install all the necessaries apt modules
@@ -94,16 +94,25 @@ update_modules_file() {
 
 # Create the usb container
 create_usb_container() {
-    local file="/piusb.bin"
 
-    if [[ ! -f "$file" ]]; then
-        echo "Start creating the usb container file in $file with a size of $USB_SIZE_MB MB and with a FAT-$USB_FAT_TYPE file system."
-        dd bs=1M if=/dev/zero of=/piusb.bin count=$USB_SIZE_MB status=progress
-        chmod 666 /piusb.bin
-        mkdosfs /piusb.bin -F $USB_FAT_TYPE -I
-        echo "The usb container file $file is created."
+    if [[ ! -f "/primary-usb-container.bin" ]]; then
+        echo "Start creating the primary usb container file with a size of $USB_SIZE_MB MB and with a FAT-$USB_FAT_TYPE file system."
+        dd bs=1M if=/dev/zero of=/primary-usb-container.bin count=$USB_SIZE_MB status=progress
+        chmod 666 /primary-usb-container.bin
+        mkdosfs /primary-usb-container.bin -F $USB_FAT_TYPE -I
+        echo "The primary usb container file was created."
     else
-        echo "The usb container file $file already exist."
+        echo "The primary usb container file already exist."
+    fi
+
+    if [[ ! -f "/secondary-usb-container.bin" ]]; then
+        echo "Start creating the primary usb container file with a size of $USB_SIZE_MB MB and with a FAT-$USB_FAT_TYPE file system."
+        dd bs=1M if=/dev/zero of=/secondary-usb-container.bin count=$USB_SIZE_MB status=progress
+        chmod 666 /secondary-usb-container.bin
+        mkdosfs /secondary-usb-container.bin -F $USB_FAT_TYPE -I
+        echo "The primary usb container file was created."
+    else
+        echo "The primary usb container file already exist."
     fi
 }
 
@@ -111,30 +120,41 @@ create_usb_container() {
 
 # Create the usb container mount
 create_usb_container_mount() {
-    local mount_folder="/mnt/usb_share"
+    local mount_folder_primary="/mnt/primary-usb-mount"
+    local mount_folder_secondary="/mnt/secondary-usb-mount"
     local file="/etc/fstab"
-    local setting="/piusb.bin /mnt/usb_share vfat users,rw,umask=000 0 2"
+    local settings_block="
+    /primary-usb-container.bin /mnt/primary-usb-mount vfat users,rw,umask=000 0 2
+    /secondary-usb-container.bin /mnt/secondary-usb-mount vfat users,rw,umask=000 0 2"
 
-    if [[ ! -d "$mount_folder" ]]; then
-        mkdir $mount_folder
-        chmod 777 $mount_folder
-        echo "Mount folder created in $mount_folder"
+    if [[ ! -d "$mount_folder_primary" ]]; then
+        mkdir $mount_folder_primary
+        chmod 777 $mount_folder_primary
+        echo "The primary mount folder was created at $mount_folder_primary"
     else
-        echo "The mount folder in $mount_folder already exists."
+        echo "The primary mount folder at $mount_folder_primary already exists."
+    fi
+
+    if [[ ! -d "$mount_folder_secondary" ]]; then
+        mkdir $mount_folder_secondary
+        chmod 777 $mount_folder_secondary
+        echo "The primary mount folder was created at $mount_folder_secondary"
+    else
+        echo "The primary mount folder at $mount_folder_secondary already exists."
     fi
 
     if [[ ! -f "$file" ]]; then
-        echo "Error: The file $file does not exist."
+        echo "Error: The file fstab at $file does not exist."
         exit 1
     fi
-    
-    if ! grep -q "^$setting" "$file"; then
-        echo "$setting" >> "$file"
+
+    if ! grep -Fxq "$(echo "$settings_block" | head -n 1)" "$file"; then
+        echo -e "\n$settings_block" >> "$file"
         systemctl daemon-reload
         mount -a
-        echo "Fstab setting added: $setting in $file"
+        echo "Configuration added to fstab config at $file."
     else
-        echo "Fstab setting already present: $setting in $file"
+        echo "Configuration already present in fstab config at $file."
     fi
 }
 
@@ -142,7 +162,7 @@ create_usb_container_mount() {
 
 # Create the shared samba folder mount 
 create_samba_mount() {
-    local mount_folder="/mnt/network_share"
+    local mount_folder="/mnt/network-share"
     local samba_config_file="/etc/samba/smb.conf"
     local samba_config_block="[usb]
     browseable = yes
@@ -154,17 +174,16 @@ create_samba_mount() {
     if [[ ! -d "$mount_folder" ]]; then
         mkdir $mount_folder
         chmod 777 $mount_folder
-        echo "Samba mount folder created in $mount_folder"
+        echo "Samba mount folder was created at $mount_folder."
     else
-        echo "The samba mount folder in $mount_folder already exists."
+        echo "The samba mount folder at $mount_folder already exists."
     fi
 
     if [[ ! -f "$samba_config_file" ]]; then
-        echo "Error: The samba config file $samba_config_file does not exist."
+        echo "Error: The samba config file at $samba_config_file does not exist."
         exit 1
     fi
     
-    # Check if the block already exists in the file
     if ! grep -Fxq "$(echo "$samba_config_block" | head -n 1)" "$samba_config_file"; then
         echo -e "\n$samba_config_block" >> "$samba_config_file"
         echo "Configuration block added to $samba_config_file"
@@ -190,19 +209,19 @@ create_static_usb_network_interface() {
 
     if [[ ! -f "$interface_file" ]]; then
         touch $interface_file
-        echo "The usb0 network config was created"
+        echo "The usb0 network config was created."
     else
         echo "The usb0 network config already exists."
     fi
 
     if ! grep -Fxq "$(echo "$interface_block" | head -n 1)" "$interface_file"; then
         echo -e "\n$interface_block" >> "$interface_file"
-        echo "Configuration block added to $interface_file"
+        echo "Configuration block was added at $interface_file."
         systemctl enable systemd-networkd
         systemctl restart systemd-networkd
         echo "Restart networkd service."
     else
-        echo "Configuration block already present in $interface_file"
+        echo "Configuration already present at $interface_file."
     fi
 }
 
@@ -217,19 +236,19 @@ create_dnsmasq_config() {
 
     if [[ ! -f "$dnsmasq_file" ]]; then
         touch $dnsmasq_file
-        echo "The dnsmasq config was created"
+        echo "The dnsmasq config was created."
     else
         echo "The dnsmasq config already exists."
     fi
 
     if ! grep -Fxq "$(echo "$dnsmasq_block" | head -n 1)" "$dnsmasq_file"; then
         echo -e "\n$dnsmasq_block" >> "$dnsmasq_file"
-        echo "Configuration block added to $dnsmasq_file"
+        echo "Configuration added at $dnsmasq_file."
         systemctl restart dnsmasq
         systemctl enable dnsmasq
         echo "Restart networkd service."
     else
-        echo "Configuration block already present in $dnsmasq_file"
+        echo "Configuration already present at $dnsmasq_file."
     fi
 }
 

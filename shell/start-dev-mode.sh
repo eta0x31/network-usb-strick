@@ -12,16 +12,15 @@ force user = root
 force group = root"
 
 if [[ ! -f "$samba_config_file" ]]; then
-    echo "Error: The samba config file $samba_config_file does not exist."
+    echo "Error: The samba config file at $samba_config_file does not exist."
     exit 1
 fi
 
-# Check if the block already exists in the file
 if ! grep -Fxq "$(echo "$samba_config_block" | head -n 1)" "$samba_config_file"; then
     echo -e "\n$samba_config_block" >> "$samba_config_file"
-    echo "Configuration block added to $samba_config_file"
+    echo "Configuration added at $samba_config_file."
     systemctl restart smbd.service
-    echo "The dev-mode is now enabled!"
+    echo "The dev-mode is now enabled."
 else
-    echo "The dev-mode was already enabled!"
+    echo "The dev-mode was already enabled."
 fi

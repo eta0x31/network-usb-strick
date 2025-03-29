@@ -256,8 +256,8 @@ create_dnsmasq_config() {
 # ---------------------------------------------------------------------------------------------------
 
 # Stages execution
-install_apt_modules
-clean_up_apt_modules
+#install_apt_modules
+#clean_up_apt_modules
 update_boot_config_file
 update_modules_file
 create_usb_container

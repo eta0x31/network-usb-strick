@@ -21,11 +21,14 @@ for file in /mnt/network-share/*; do
     
         birth_date_raw=$(stat --format="%w" "$file")
         birth_date=$(date -d "$birth_date_raw" "+%Y-%m-%d %H:%M:%S")
+
         echo "b: $birth_date, s: $start_time, f: $file"
 
-        if [[ $birth_date < $start_time ]] ; then
-            echo "Delete: $file"
+        if [[ $birth_date > $start_time ]] ; then
+            continue
         fi
+
+        echo "Delete: $file"
 done
 
 # find /mnt/network-share/ -type f -exec bash -c '
